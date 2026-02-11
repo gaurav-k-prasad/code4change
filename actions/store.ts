@@ -1,7 +1,7 @@
 "use server";
 
 import connectDB from "@/lib/db";
-import Store from "@/models/StoreOwner"; // Adjust path to your schema
+import Store from "@/models/Store"; // Adjust path to your schema
 import { redirect } from "next/navigation";
 import { registerUser } from "./user";
 
