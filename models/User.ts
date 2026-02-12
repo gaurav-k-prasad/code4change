@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: false,
+    },
   },
   { timestamps: true },
 );

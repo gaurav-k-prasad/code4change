@@ -17,10 +17,10 @@ export interface IRoute extends Document {
     estimatedDurationMinutes: number;
     trafficDelayMinutes: number;
   };
-  googleRouteData: {
-    polyline: string; // Used to render the line on the map
-    waypointOrder: number[]; // warning ??
+  routeData: {
+    path: [number, number][];
   };
+  alertCount: number;
 }
 
 const RouteSchema: Schema = new Schema(
@@ -58,9 +58,14 @@ const RouteSchema: Schema = new Schema(
       trafficDelayMinutes: { type: Number, default: 0 },
     },
 
-    googleRouteData: {
-      polyline: { type: String }, // Store the encoded polyline
+    // CHANGED: Adapted for Leaflet + OSRM
+    routeData: {
+      path: {
+        type: [[Number]], // Defines an Array of Arrays of Numbers
+        default: [], // Default to empty if route fetching fails
+      },
     },
+    alertCount: { type: Number, min: 0, default: 0 },
   },
   { timestamps: true },
 );

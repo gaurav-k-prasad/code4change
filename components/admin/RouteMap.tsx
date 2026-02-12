@@ -31,7 +31,11 @@ interface RouteMapProps {
   destination: { lat: number; lng: number };
 }
 
-export default function RouteMap({ origin, destination }: RouteMapProps) {
+export default function RouteMap({
+  origin,
+  destination,
+  zoom,
+}: RouteMapProps & { zoom: number }) {
   const [isMounted, setIsMounted] = useState(false);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [customIcon, setCustomIcon] = useState<Icon | null>(null);
@@ -100,10 +104,10 @@ export default function RouteMap({ origin, destination }: RouteMapProps) {
   }
 
   return (
-    <div className="h-125 w-full rounded-md overflow-hidden border relative z-0">
+    <div className="h-300 w-full rounded-md overflow-hidden border relative z-0">
       <MapContainer
         center={[centerLat, centerLng]}
-        zoom={13}
+        zoom={zoom}
         scrollWheelZoom={false}
         className="h-full w-full"
       >

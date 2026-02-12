@@ -4,19 +4,11 @@ import AlertsList from "@/components/admin/AlertsList";
 import RouteMap from "@/components/admin/RouteMap";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import RouteDetailSkeleton from "@/components/ui/route-details-skeleton";
+import { IRoute } from "@/models/Route";
 import { useParams } from "next/navigation";
-
-// Mock Data for a Single Route
-// ! warning
-const MOCK_ROUTE_DETAIL = {
-  _id: "route_123",
-  routeName: "Pharma Supply Chain A",
-  status: "ACTIVE",
-  origin: { address: "Mumbai", coordinates: { lat: 19.076, lng: 72.8777 } },
-  destination: { address: "Pune", coordinates: { lat: 18.5204, lng: 73.8567 } },
-  thresholds: { maxTemp: 8, maxVibration: 5 },
-  logistics: { distanceKm: 148, trafficDelayMinutes: 12 },
-};
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Mock Alerts linked to this route
 // ! warning
@@ -40,10 +32,49 @@ const MOCK_ALERTS = [
 ];
 
 export default function RouteDetailPage() {
-  const { routeId } = useParams();
+  const { routesId: routeId } = useParams();
 
-  // In a real app, use useEffect to fetch data based on routeId
-  const route = MOCK_ROUTE_DETAIL;
+  const [route, setRoute] = useState<IRoute | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Only fetch if we have a routeId
+    if (!routeId) return;
+
+    const fetchRouteDetail = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/routes/${routeId}`);
+
+        if (!response.ok) {
+          throw new Error("Route not found");
+        }
+
+        const data = await response.json();
+        setRoute(data);
+      } catch (error) {
+        console.error("Fetch error:", error);
+        toast.error("Could not load route details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRouteDetail();
+  }, [routeId]);
+
+  const getZoomLevel = (distance: number): number => {
+    if (distance < 5) return 13; // City block
+    if (distance < 20) return 12; // City-wide
+    if (distance < 50) return 11; // Metro area
+    if (distance < 150) return 10; // Regional / Interstate
+    if (distance < 500) return 9; // State-wide
+    return 6; // Country-wide
+  };
+
+  if (isLoading) {
+    return <RouteDetailSkeleton />;
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -51,40 +82,25 @@ export default function RouteDetailPage() {
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            {route.routeName}
-            <Badge variant={route.status === "ACTIVE" ? "default" : "outline"}>
-              {route.status}
+            {route?.routeName}
+            <Badge variant={route?.status === "ACTIVE" ? "default" : "outline"}>
+              {route?.status}
             </Badge>
           </h1>
           <p className="text-muted-foreground mt-1">
             Route ID: <span className="font-mono text-xs">{routeId}</span>
           </p>
         </div>
-
-        <div className="flex gap-4">
-          <Card className="p-4 flex flex-col items-center justify-center min-w-30">
-            <span className="text-xs text-muted-foreground">Max Temp</span>
-            <span className="text-xl font-bold">
-              {route.thresholds.maxTemp}°C
-            </span>
-          </Card>
-          <Card className="p-4 flex flex-col items-center justify-center min-w-30">
-            <span className="text-xs text-muted-foreground">Traffic Delay</span>
-            <span className="text-xl font-bold text-amber-600">
-              +{route.logistics.trafficDelayMinutes}m
-            </span>
-          </Card>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Map & Logistics */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="h-125 overflow-hidden relative py-0">
-            {/* Google Map Component */}
+          <Card className="h-200 overflow-hidden relative py-0">
             <RouteMap
               origin={route.origin.coordinates}
               destination={route.destination.coordinates}
+              zoom={getZoomLevel(route?.logistics.distanceKm)}
             />
           </Card>
         </div>

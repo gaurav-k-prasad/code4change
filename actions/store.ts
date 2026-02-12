@@ -2,6 +2,7 @@
 
 import connectDB from "@/lib/db";
 import Store from "@/models/Store"; // Adjust path to your schema
+import User from "@/models/User";
 import { redirect } from "next/navigation";
 import { registerUser } from "./user";
 
@@ -24,20 +25,21 @@ export async function registerStore(formData: FormData) {
   await connectDB();
 
   try {
-    await registerUser();
-    await Store.create({
+    const newStore = await Store.create({
       name,
       address,
       location: {
-        type: "Point", // Must be 'Point' per your schema enum
-        coordinates: [lng, lat], // ⚠️ CRITICAL: MongoDB uses [Longitude, Latitude]
+        type: "Point",
+        coordinates: [lng, lat],
       },
-      inventory: [], // Start with empty inventory
+      inventory: [],
     });
+    console.log(newStore);
+    await registerUser(newStore._id);
   } catch (error) {
     console.error("Store registration failed:", error);
     throw new Error("Failed to register store");
   }
 
-  redirect("/dashboard/store");
+  redirect("/dashboard/admin");
 }
