@@ -1,13 +1,6 @@
 import { ethers } from "ethers";
 
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
 const contractAddress = "0xd197ca8876ff54C56065beDD18C87c79Fe60EECf";
-
 const abi = [
     {
       "anonymous": false,
@@ -132,30 +125,11 @@ const abi = [
     }
   ];
 
-export const getProvider = () => {
-  if (!window.ethereum) {
-    throw new Error("MetaMask not installed");
-  }
+const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 
-  return new ethers.BrowserProvider(window.ethereum);
-};
-
-export const getSigner = async () => {
-  const provider = getProvider();
-  return await provider.getSigner();
-};
-
-export const getContract = async () => {
-  await checkNetwork();
-  const signer = await getSigner();
-  return new ethers.Contract(contractAddress, abi, signer);
-};
-
-export const checkNetwork = async () => {
-  const provider = getProvider();
-  const network = await provider.getNetwork();
-
-  if (Number(network.chainId) !== 80002) {
-    throw new Error("Please switch to Amoy network");
-  }
-};
+export const serverContract = new ethers.Contract(
+  contractAddress,
+  abi,
+  wallet
+);
